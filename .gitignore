@@ -1,0 +1,16 @@
+.env
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+htmlcov/
+coverage.xml
+node_modules/
+dist/
+playwright-report/
+test-results/
+data/
+.runtime-data/
+*.log

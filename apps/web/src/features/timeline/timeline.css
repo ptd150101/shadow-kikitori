@@ -1,0 +1,18 @@
+.timeline { position: relative; height: 180px; overflow: hidden; border: 1px solid #2b3748; border-radius: 12px; background: #0d1117; touch-action: none; }
+.timeline-wave { position: absolute; inset: 18px 0; width: 100%; height: calc(100% - 36px); }
+.timeline-wave line { stroke: #3c506a; stroke-width: 1; }
+.timeline-region { position: absolute; top: 20%; height: 60%; min-width: 5px; border: 1px solid; border-radius: 6px; cursor: pointer; transition: filter .12s ease; }
+.timeline-region:hover, .timeline-region.selected { filter: brightness(1.35); z-index: 2; }
+.timeline-edge { position: absolute; top: -6px; bottom: -6px; width: 9px; border-radius: 4px; background: #e2e8f0; cursor: ew-resize; }
+.timeline-edge.start { left: -5px; }.timeline-edge.end { right: -5px; }
+.timeline-playhead { position: absolute; inset: 0 auto 0 0; width: 2px; background: #f8fafc; box-shadow: 0 0 10px rgba(255,255,255,.65); z-index: 4; pointer-events: none; }
+.chunk-list { height: min(58vh, 860px); overflow: auto; }
+.chunk-virtual-row { position: absolute; left: 0; width: 100%; padding: 7px 10px; }
+.chunk-row { display: grid; grid-template-columns: 230px minmax(120px, .6fr) minmax(280px, 1.4fr); gap: 12px; align-items: center; border: 1px solid transparent; border-radius: 12px; background: #111722; padding: 11px; cursor: pointer; }
+.chunk-row.selected { border-color: #3b82f6; background: #172235; }.chunk-row:hover { background: #17202d; }
+.chunk-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; }.chunk-index { width: 28px; height: 28px; border: 1px solid #3a4a60; border-radius: 7px; background: #0d1117; color: #dbe4ef; font-weight: 700; }
+.speaker-select { max-width: 105px; border: 0; background: transparent; color: #cbd5e1; padding: 2px; }.mini-wave { width: 100%; height: 55px; background: #0d1117; border-radius: 8px; }.mini-wave line { stroke-width: 1; }.chunk-content { display: grid; gap: 6px; }.chunk-transcript { min-height: 54px; max-height: 96px; padding: 7px 9px; font-size: 14px; }
+@media (max-width: 1050px) { .chunk-row { grid-template-columns: 1fr; }.mini-wave { height: 42px; } }
+.timeline-wrap { display: grid; gap: 7px; }
+.timeline-controls { justify-content: flex-end; }
+.timeline-controls input { width: 150px; }
