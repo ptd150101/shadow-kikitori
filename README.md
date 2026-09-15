@@ -50,6 +50,18 @@ npm run dev
 
 The frontend proxies `/api` to port `8765` in development.
 
+### UI preview without models
+
+To view the editor layout without installing the backend or downloading model weights, build the static demo route:
+
+```bash
+cd apps/web
+VITE_PREVIEW_MODE=true npm run build
+npx vite preview --host 127.0.0.1
+```
+
+Open `/` or `/preview`. The demo uses representative JLPT data and keeps all controls local; the full `/projects` route remains connected to the real API when `VITE_PREVIEW_MODE` is not set.
+
 On Windows, the same three processes can be started with `scripts/start-api.ps1`, `scripts/start-worker.ps1` and `scripts/start-web.ps1`. `scripts/healthcheck.ps1` checks the local tools and model dependencies.
 
 ## Model setup

@@ -3,6 +3,9 @@ import ProjectLibraryPage from "../features/projects/ProjectLibraryPage";
 import ImportPage from "../features/import-media/ImportPage";
 import WorkspacePage from "../features/workspace/WorkspacePage";
 import SettingsPage from "../features/settings/SettingsPage";
+import DemoPreviewPage from "../features/preview/DemoPreviewPage";
+
+const previewMode = import.meta.env.VITE_PREVIEW_MODE === "true";
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
@@ -27,13 +30,14 @@ export default function App() {
   return (
     <Shell>
       <Routes>
+        <Route path="/preview" element={<DemoPreviewPage />} />
         <Route path="/projects" element={<ProjectLibraryPage />} />
         <Route path="/projects/:projectId/import" element={<ImportPage />} />
         <Route path="/projects/:projectId/*" element={<WorkspacePage />} />
         <Route path="/settings" element={<SettingsPage />} />
-        <Route path="*" element={<Navigate to="/projects" replace />} />
+        <Route path="/" element={previewMode ? <DemoPreviewPage /> : <Navigate to="/projects" replace />} />
+        <Route path="*" element={previewMode ? <DemoPreviewPage /> : <Navigate to="/projects" replace />} />
       </Routes>
     </Shell>
   );
 }
-
