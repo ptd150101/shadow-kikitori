@@ -52,17 +52,23 @@ The frontend proxies `/api` to port `8765` in development.
 
 ### UI preview without models
 
-To view the editor layout without installing the backend or downloading model weights, build the static demo route:
+The interactive design preview is served at `/` and `/preview`. It uses representative JLPT data and keeps the controls local, so it can be opened without the API or model weights. The API-backed project library, import flow, workspace and settings remain available at `/projects` and `/settings`.
 
 ```bash
 cd apps/web
-VITE_PREVIEW_MODE=true npm run build
+npm install
+npm run dev
+```
+
+For a static production build:
+
+```bash
+cd apps/web
+npm run build
 npx vite preview --host 127.0.0.1
 ```
 
-Open `/` or `/preview`. The demo uses representative JLPT data and keeps all controls local; the full `/projects` route remains connected to the real API when `VITE_PREVIEW_MODE` is not set.
-
-On Windows, the same three processes can be started with `scripts/start-api.ps1`, `scripts/start-worker.ps1` and `scripts/start-web.ps1`. `scripts/healthcheck.ps1` checks the local tools and model dependencies.
+Open `http://127.0.0.1:4173/` for the design preview. On Windows, the API and worker can still be started with `scripts/start-api.ps1` and `scripts/start-worker.ps1`. The web app's development server proxies `/api` to port `8765`.
 
 ## Model setup
 

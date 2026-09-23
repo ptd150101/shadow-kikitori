@@ -1,4 +1,4 @@
-import { NavLink, Navigate, Route, Routes } from "react-router-dom";
+import { NavLink, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import ProjectLibraryPage from "../features/projects/ProjectLibraryPage";
 import ImportPage from "../features/import-media/ImportPage";
 import WorkspacePage from "../features/workspace/WorkspacePage";
@@ -27,15 +27,21 @@ function Shell({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  const { pathname } = useLocation();
+
+  // The published design preview is the product's default entry point.
+  if (pathname === "/" || pathname === "/preview") {
+    return <DemoPreviewPage />;
+  }
+
   return (
     <Shell>
       <Routes>
-        <Route path="/preview" element={<DemoPreviewPage />} />
         <Route path="/projects" element={<ProjectLibraryPage />} />
         <Route path="/projects/:projectId/import" element={<ImportPage />} />
         <Route path="/projects/:projectId/*" element={<WorkspacePage />} />
         <Route path="/settings" element={<SettingsPage />} />
-        <Route path="/" element={previewMode ? <DemoPreviewPage /> : <Navigate to="/projects" replace />} />
+        <Route path="/" element={<Navigate to="/projects" replace />} />
         <Route path="*" element={previewMode ? <DemoPreviewPage /> : <Navigate to="/projects" replace />} />
       </Routes>
     </Shell>
