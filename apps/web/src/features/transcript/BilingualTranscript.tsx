@@ -6,7 +6,7 @@ import RubyText from "../../components/RubyText";
 import { formatTime } from "../../lib/format";
 import type { Chunk, Speaker } from "../../types/api";
 
-export default function BilingualTranscript({ projectId, chunks, speakers }: { projectId: string; chunks: Chunk[]; speakers: Speaker[] }) {
+export default function BilingualTranscript({ projectId, chunks, speakers, videoUrl }: { projectId: string; chunks: Chunk[]; speakers: Speaker[]; videoUrl?: string }) {
   const queryClient = useQueryClient();
   const audio = useAudio();
   const [query, setQuery] = useState("");
@@ -15,9 +15,12 @@ export default function BilingualTranscript({ projectId, chunks, speakers }: { p
     const text = `${chunk.text?.reference_text ?? ""} ${chunk.text?.translation_vi ?? ""} ${chunk.text?.asr_normalized ?? ""}`;
     return !query.trim() || text.toLowerCase().includes(query.toLowerCase());
   }), [chunks, query]);
-  return <section className="card card-pad stack">
+  return <section className="card card-pad stack transcript-workspace">
     <div className="row between wrap"><div><h2>Transcript song ngữ</h2><p className="muted small">Bấm một dòng để nghe; transcript user-confirmed được giữ nguyên khi chạy lại AI.</p></div><input className="input search-input" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm tiếng Nhật hoặc tiếng Việt…" /></div>
-    <div className="transcript-list">{filtered.map((chunk) => <TranscriptRow key={chunk.id} projectId={projectId} chunk={chunk} speakers={speakers} selected={selected === chunk.id} onSelect={() => { setSelected(chunk.id); audio.seek(chunk.start_ms); }} onSaved={() => { void queryClient.invalidateQueries({ queryKey: ["chunks", projectId, "transcript"] }); }} />)}{filtered.length === 0 ? <div className="empty">Không có dòng phù hợp.</div> : null}</div>
+    <div className={"transcript-layout" + (videoUrl ? " has-video" : "")}>
+      {videoUrl ? <section className="transcript-video-card" aria-label="Video song ngữ"><video className="transcript-video" src={videoUrl} controls playsInline preload="metadata" ref={audio.registerVideo} aria-label="Video bài học" /><p className="transcript-video-caption">Chọn một câu trong transcript để phát từ đúng thời điểm.</p></section> : null}
+      <div className="transcript-list">{filtered.map((chunk) => <TranscriptRow key={chunk.id} projectId={projectId} chunk={chunk} speakers={speakers} selected={selected === chunk.id} onSelect={() => { setSelected(chunk.id); audio.seek(chunk.start_ms); }} onSaved={() => { void queryClient.invalidateQueries({ queryKey: ["chunks", projectId, "transcript"] }); }} />)}{filtered.length === 0 ? <div className="empty">Không có dòng phù hợp.</div> : null}</div>
+    </div>
   </section>;
 }
 

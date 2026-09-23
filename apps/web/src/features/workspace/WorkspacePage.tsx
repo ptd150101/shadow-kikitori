@@ -23,6 +23,7 @@ export default function WorkspacePage() {
   const waveform = useQuery({ queryKey: ["waveform", projectId], queryFn: () => api.getWaveform(projectId), enabled: Boolean(projectId) && activeTab === "editor" });
   const metrics = useQuery({ queryKey: ["metrics", projectId], queryFn: () => api.getMetrics(projectId), enabled: Boolean(projectId) && activeTab === "insights" });
   const speakers = useQuery({ queryKey: ["speakers", projectId], queryFn: () => api.listSpeakers(projectId), enabled: Boolean(projectId) });
+  const media = useQuery({ queryKey: ["media", projectId], queryFn: () => api.listMedia(projectId), enabled: Boolean(projectId) && activeTab === "transcript" });
 
   const source = useMemo(() => api.mediaUrl(projectId), [projectId]);
   if (project.isLoading) return <div className="empty">Đang mở workspace…</div>;
@@ -31,6 +32,11 @@ export default function WorkspacePage() {
     return <Navigate to={`/projects/${projectId}/import`} replace />;
   }
   const title = project.data.title;
+  const hasVideo = Boolean(media.data?.some((asset) => {
+    const mimeType = asset.mime_type?.toLowerCase() ?? "";
+    const fileName = asset.original_name ?? "";
+    return mimeType.startsWith("video/") || (!mimeType.startsWith("audio/") && /\.(mp4|webm|mov|mkv|avi)$/i.test(fileName));
+  }));
   return <AudioProvider source={source}>
     <section className="page stack workspace-page">
       <header className="page-header workspace-header">
@@ -51,7 +57,7 @@ export default function WorkspacePage() {
       </nav>
       {activeTab === "editor" && waveform.data && chunks.data ? <ChunkEditor projectId={projectId} projectRevision={project.data.active_revision} chunks={chunks.data} waveform={waveform.data} /> : null}
       {activeTab === "editor" && (!waveform.data || !chunks.data) ? <div className="card empty">{waveform.isLoading || chunks.isLoading ? "Đang tải timeline…" : "Chưa có waveform/chunk. Hãy chạy xử lý AI."}</div> : null}
-      {activeTab === "transcript" && chunks.data ? <BilingualTranscript projectId={projectId} chunks={chunks.data} speakers={speakers.data ?? []} /> : null}
+      {activeTab === "transcript" && chunks.data ? <BilingualTranscript projectId={projectId} chunks={chunks.data} speakers={speakers.data ?? []} videoUrl={hasVideo ? source : undefined} /> : null}
       {activeTab === "transcript" && !chunks.data ? <div className="card empty">Đang tải transcript…</div> : null}
       {activeTab === "practice" ? <PracticePage projectId={projectId} /> : null}
       {activeTab === "insights" ? <Insights projectId={projectId} metrics={metrics.data} onRefresh={() => { void queryClient.invalidateQueries({ queryKey: ["metrics", projectId] }); }} /> : null}

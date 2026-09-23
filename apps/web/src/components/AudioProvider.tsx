@@ -1,12 +1,13 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 
 type AudioController = {
-  audio: HTMLAudioElement | null;
+  audio: HTMLMediaElement | null;
   currentMs: number;
   durationMs: number;
   isPlaying: boolean;
   playbackRate: number;
   volume: number;
+  registerVideo: (video: HTMLVideoElement | null) => void;
   seek: (milliseconds: number) => void;
   toggle: () => Promise<void>;
   playRange: (startMs: number, endMs: number, loop?: boolean) => Promise<void>;
@@ -19,105 +20,140 @@ const AudioContext = createContext<AudioController | null>(null);
 
 export function AudioProvider({ source, children }: { source: string; children: React.ReactNode }) {
   const audioRef = useRef<HTMLAudioElement>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const rangeRef = useRef<{ startMs: number; endMs: number; loop: boolean } | null>(null);
+  const playbackRateRef = useRef(1);
+  const volumeRef = useRef(1);
+  const [videoElement, setVideoElement] = useState<HTMLVideoElement | null>(null);
   const [currentMs, setCurrentMs] = useState(0);
   const [durationMs, setDurationMs] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackRate, setRate] = useState(1);
   const [volume, setVolumeState] = useState(1);
 
+  const getMedia = useCallback(() => videoRef.current ?? audioRef.current, []);
+  const registerVideo = useCallback((video: HTMLVideoElement | null) => {
+    if (!video && videoRef.current && audioRef.current) {
+      audioRef.current.currentTime = videoRef.current.currentTime;
+      audioRef.current.playbackRate = playbackRateRef.current;
+      audioRef.current.volume = volumeRef.current;
+    }
+    videoRef.current = video;
+    if (video) {
+      const syncPosition = () => {
+        if (audioRef.current && audioRef.current.currentTime > 0) {
+          video.currentTime = audioRef.current.currentTime;
+        }
+        video.playbackRate = playbackRateRef.current;
+        video.volume = volumeRef.current;
+      };
+      if (video.readyState >= 1) syncPosition();
+      else video.addEventListener("loadedmetadata", syncPosition, { once: true });
+    }
+    setVideoElement(video);
+  }, []);
+
   useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
+    const media = videoElement ?? audioRef.current;
+    if (!media) return;
     const update = () => {
-      const current = Math.round(audio.currentTime * 1000);
+      const current = Math.round(media.currentTime * 1000);
       const range = rangeRef.current;
       if (range && current >= range.endMs) {
         if (range.loop) {
-          audio.currentTime = range.startMs / 1000;
-          void audio.play();
+          media.currentTime = range.startMs / 1000;
+          void media.play();
         } else {
-          audio.pause();
-          audio.currentTime = range.endMs / 1000;
+          media.pause();
+          media.currentTime = range.endMs / 1000;
           rangeRef.current = null;
         }
       }
-      setCurrentMs(Math.round(audio.currentTime * 1000));
+      setCurrentMs(Math.round(media.currentTime * 1000));
     };
-    const metadata = () => setDurationMs(Math.round((audio.duration || 0) * 1000));
+    const metadata = () => setDurationMs(Math.round((media.duration || 0) * 1000));
     const play = () => setIsPlaying(true);
     const pause = () => setIsPlaying(false);
-    audio.addEventListener("timeupdate", update);
-    audio.addEventListener("loadedmetadata", metadata);
-    audio.addEventListener("play", play);
-    audio.addEventListener("pause", pause);
+    media.addEventListener("timeupdate", update);
+    media.addEventListener("loadedmetadata", metadata);
+    media.addEventListener("play", play);
+    media.addEventListener("pause", pause);
     return () => {
-      audio.removeEventListener("timeupdate", update);
-      audio.removeEventListener("loadedmetadata", metadata);
-      audio.removeEventListener("play", play);
-      audio.removeEventListener("pause", pause);
+      media.removeEventListener("timeupdate", update);
+      media.removeEventListener("loadedmetadata", metadata);
+      media.removeEventListener("play", play);
+      media.removeEventListener("pause", pause);
     };
-  }, [source]);
+  }, [source, videoElement]);
 
   const seek = useCallback((milliseconds: number) => {
-    const audio = audioRef.current;
-    if (!audio) return;
+    const media = getMedia();
+    if (!media) return;
     rangeRef.current = null;
-    audio.currentTime = Math.max(0, milliseconds) / 1000;
-    setCurrentMs(Math.max(0, milliseconds));
-  }, []);
+    const position = Math.max(0, milliseconds);
+    media.currentTime = position / 1000;
+    if (audioRef.current && media !== audioRef.current) audioRef.current.currentTime = position / 1000;
+    setCurrentMs(position);
+  }, [getMedia]);
 
   const toggle = useCallback(async () => {
-    const audio = audioRef.current;
-    if (!audio) return;
+    const media = getMedia();
+    if (!media) return;
     rangeRef.current = null;
-    if (audio.paused) await audio.play();
-    else audio.pause();
-  }, []);
+    if (media.paused) await media.play();
+    else media.pause();
+  }, [getMedia]);
 
   const playRange = useCallback(async (startMs: number, endMs: number, loop = false) => {
-    const audio = audioRef.current;
-    if (!audio) return;
+    const media = getMedia();
+    if (!media) return;
     rangeRef.current = { startMs, endMs, loop };
-    audio.currentTime = startMs / 1000;
-    await audio.play();
-  }, []);
+    media.currentTime = startMs / 1000;
+    if (audioRef.current && media !== audioRef.current) audioRef.current.currentTime = startMs / 1000;
+    await media.play();
+  }, [getMedia]);
 
   const setPlaybackRate = useCallback((rate: number) => {
-    const audio = audioRef.current;
-    if (audio) audio.playbackRate = rate;
+    playbackRateRef.current = rate;
+    const media = getMedia();
+    if (media) media.playbackRate = rate;
     setRate(rate);
-  }, []);
+  }, [getMedia]);
 
   const setVolume = useCallback((next: number) => {
     const value = Math.max(0, Math.min(1, next));
-    const audio = audioRef.current;
-    if (audio) audio.volume = value;
+    volumeRef.current = value;
+    const media = getMedia();
+    if (media) media.volume = value;
     setVolumeState(value);
-  }, []);
+  }, [getMedia]);
 
   const skip = useCallback((milliseconds: number) => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    audio.currentTime = Math.max(0, Math.min(audio.duration || Number.MAX_SAFE_INTEGER, audio.currentTime + milliseconds / 1000));
-  }, []);
+    const media = getMedia();
+    if (!media) return;
+    media.currentTime = Math.max(0, Math.min(media.duration || Number.MAX_SAFE_INTEGER, media.currentTime + milliseconds / 1000));
+  }, [getMedia]);
 
   const value = useMemo<AudioController>(() => ({
-    audio: audioRef.current,
+    audio: videoElement ?? audioRef.current,
     currentMs,
     durationMs,
     isPlaying,
     playbackRate,
     volume,
+    registerVideo,
     seek,
     toggle,
     playRange,
     setPlaybackRate,
     setVolume,
     skip,
-  }), [currentMs, durationMs, isPlaying, playbackRate, volume, seek, toggle, playRange, setPlaybackRate, setVolume, skip]);
+  }), [videoElement, currentMs, durationMs, isPlaying, playbackRate, volume, registerVideo, seek, toggle, playRange, setPlaybackRate, setVolume, skip]);
 
-  return <AudioContext.Provider value={value}><audio ref={audioRef} src={source} preload="metadata" />{children}</AudioContext.Provider>;
+  return <AudioContext.Provider value={value}>
+    <audio ref={audioRef} src={source} preload="metadata" aria-hidden="true" tabIndex={-1} style={{ display: "none" }} />
+    {children}
+  </AudioContext.Provider>;
 }
 
 // eslint-disable-next-line react-refresh/only-export-components

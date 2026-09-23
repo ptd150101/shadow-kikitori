@@ -52,7 +52,9 @@ The frontend proxies `/api` to port `8765` in development.
 
 ### UI preview without models
 
-The interactive design preview is served at `/` and `/preview`. It uses representative JLPT data and keeps the controls local, so it can be opened without the API or model weights. The API-backed project library, import flow, workspace and settings remain available at `/projects` and `/settings`.
+The default route `/` redirects to `/projects` and renders the native React library screen. With the API running it lists your projects; if the API is unavailable or the library is empty, it shows clearly labeled sample lessons so the design is still visible.
+
+The standalone HTML reference remains at `/preview`. It uses representative JLPT data and local-only mock interactions. Import, workspace, and settings screens in the React app use the local API.
 
 ```bash
 cd apps/web
@@ -60,7 +62,7 @@ npm install
 npm run dev
 ```
 
-For a static production build:
+Open `http://127.0.0.1:5173/` for the React app or `http://127.0.0.1:5173/preview` for the standalone design reference. For a static production build:
 
 ```bash
 cd apps/web
@@ -68,7 +70,7 @@ npm run build
 npx vite preview --host 127.0.0.1
 ```
 
-Open `http://127.0.0.1:4173/` for the design preview. On Windows, the API and worker can still be started with `scripts/start-api.ps1` and `scripts/start-worker.ps1`. The web app's development server proxies `/api` to port `8765`.
+On Windows, the API and worker can still be started with `scripts/start-api.ps1` and `scripts/start-worker.ps1`. The web app's development server proxies `/api` to port `8765`.
 
 ## Model setup
 
