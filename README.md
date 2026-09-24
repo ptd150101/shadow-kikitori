@@ -52,9 +52,9 @@ The frontend proxies `/api` to port `8765` in development.
 
 ### UI preview without models
 
-The default route `/` redirects to `/projects` and renders the native React library screen. With the API running it lists your projects; if the API is unavailable or the library is empty, it shows clearly labeled sample lessons so the design is still visible.
+The default route `/` redirects to `/preview` and opens the interactive design preview. Sample lessons in that preview use representative JLPT content. Choosing an audio/video file or YouTube URL creates a project, imports the source, and queues a real backend job. The API and worker must both be running for processing; the preview reports backend errors and job status instead of simulating completion.
 
-The standalone HTML reference remains at `/preview`. It uses representative JLPT data and local-only mock interactions. Import, workspace, and settings screens in the React app use the local API.
+The API-backed React library remains available at `/projects`, and real project editor routes open there after processing.
 
 ```bash
 cd apps/web
@@ -62,7 +62,7 @@ npm install
 npm run dev
 ```
 
-Open `http://127.0.0.1:5173/` for the React app or `http://127.0.0.1:5173/preview` for the standalone design reference. For a static production build:
+Open `http://127.0.0.1:5173/` for the design preview or `http://127.0.0.1:5173/projects` for the React library. For a static production build:
 
 ```bash
 cd apps/web
