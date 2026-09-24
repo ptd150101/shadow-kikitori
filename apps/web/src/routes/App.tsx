@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useLayoutEffect, useState } from "react";
 import { NavLink, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import ProjectLibraryPage from "../features/projects/ProjectLibraryPage";
@@ -20,6 +20,14 @@ function Shell({ children }: { children: React.ReactNode }) {
   const projects = useQuery({ queryKey: ["projects"], queryFn: api.listProjects });
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark">(() => {
+    try { return window.localStorage.getItem("jlpt-studio-theme") === "dark" ? "dark" : "light"; }
+    catch { return "light"; /* Storage can be disabled. */ }
+  });
+  useLayoutEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    try { window.localStorage.setItem("jlpt-studio-theme", theme); } catch { /* Theme still works for this session. */ }
+  }, [theme]);
   const recent = projects.data?.length
     ? projects.data.slice(0, 2).map((project) => ({ id: project.id, title: project.title, isSample: false }))
     : sampleRecent;
@@ -33,6 +41,9 @@ function Shell({ children }: { children: React.ReactNode }) {
   function openCreateProject() {
     navigate("/projects?create=1");
     setMobileMenuOpen(false);
+  }
+  function toggleTheme() {
+    setTheme((current) => current === "dark" ? "light" : "dark");
   }
 
   return (
@@ -81,6 +92,9 @@ function Shell({ children }: { children: React.ReactNode }) {
           </div>
           <div className="studio-topbar-actions">
             <span className="studio-preview-badge">INTERACTIVE PREVIEW</span>
+            <button className="studio-theme-button" type="button" onClick={toggleTheme} aria-label={theme === "dark" ? "Chuyển sang giao diện sáng" : "Chuyển sang giao diện tối"} aria-pressed={theme === "dark"} title={theme === "dark" ? "Giao diện sáng" : "Giao diện tối"}>
+              <span aria-hidden="true">{theme === "dark" ? "☼" : "☾"}</span>
+            </button>
             <NavLink className="studio-help-button" to="/preview" aria-label="Mở bản xem trước" title="Mở bản xem trước">?</NavLink>
           </div>
         </header>
@@ -97,7 +111,7 @@ export default function App() {
   return (
     <Shell>
       <Routes>
-        <Route path="/" element={<Navigate to="/projects" replace />} />
+        <Route path="/" element={<Navigate to="/preview" replace />} />
         <Route path="/projects" element={<ProjectLibraryPage />} />
         <Route path="/projects/:projectId/import" element={<ImportPage />} />
         <Route path="/projects/:projectId/*" element={<WorkspacePage />} />
